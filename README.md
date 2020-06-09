@@ -1,2 +1,3 @@
 # hUtils
-various utilities for Rust
+Various utilities for Rust
+
