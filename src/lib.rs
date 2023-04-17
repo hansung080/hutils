@@ -1,8 +1,8 @@
-// Copyright (c) The Hutils Contributors
+// Copyright (c) The hUtils Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! `hutils` provies various utilities to help you write a code easier and better.
+//! `hutils` provides various utilities to help you write the better Rust code.
 
 pub mod cache;
 
-pub use self::cache::ClosureCacher;
+pub use self::cache::FnCacher;

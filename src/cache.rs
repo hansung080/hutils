@@ -1,56 +1,49 @@
-// Copyright (c) The Hutils Contributors
+// Copyright (c) The hUtils Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::cmp::Eq;
 
-/// `ClosureCacher` caches the result of invoking the closure.
+/// `FnCacher` caches the result of a high-cost function using the design patterns of memoization and lazy evaluation.
 /// 
 /// ### Examples
 /// ```
-/// use hutils::ClosureCacher;
-/// 
-/// let mut cacher = ClosureCacher::new(|x| x);
-/// 
-/// assert_eq!(1, *cacher.result(&1));
+/// use hutils::FnCacher;
+///
+/// let mut square = FnCacher::new(|x| x * x);
+///
+/// assert_eq!(&9, square.call(&3));
 /// ```
-#[allow(unused)]
-pub struct ClosureCacher<'a, F, K, V>
+pub struct FnCacher<'a, F, T, R>
 where
-    F: Fn(&K) -> &V,
-    K: Hash + Eq,
+    F: Fn(&T) -> R,
+    T: Eq + Hash,
 {
-    closure: F,
-    results: HashMap<&'a K, &'a V>,
+    function: F,
+    results: HashMap<&'a T, R>,
 }
 
-impl<'a, F, K, V> ClosureCacher<'a, F, K, V>
+impl<'a, F, T, R> FnCacher<'a, F, T, R>
 where
-    F: Fn(&K) -> &V,
-    K: Hash + Eq,
+    F: Fn(&T) -> R,
+    T: Eq + Hash,
 {
-    /// `new` creates a new `ClosureCacher`.
-    #[allow(unused)]
-    pub fn new(closure: F) -> ClosureCacher<'a, F, K, V> {
-        ClosureCacher {
-            closure,
+    /// `new` constructs a `FnCacher` with `function`.
+    pub fn new(function: F) -> Self {
+        Self {
+            function,
             results: HashMap::new(),
         }
     }
 
-    /// `result` returns the cached result if it exists.
-    /// Otherwise, it invokes the closure and returns the result.
-    #[allow(unused)]
-    pub fn result(&mut self, arg: &'a K) -> &'a V {
-        match self.results.get(arg) {
-            Some(result) => result,
-            None => {
-                let result = (self.closure)(arg);
-                self.results.insert(arg, result);
-                result
-            }
+    /// `call` returns the cached result if it exists in the cache.
+    /// Otherwise, it calls a function with `arg` and returns the result.
+    pub fn call(&mut self, arg: &'a T) -> &R {
+        if self.results.get(arg).is_none() {
+            let result = (self.function)(arg);
+            self.results.insert(arg, result);
         }
+        &self.results[arg]
     }
 }
 
@@ -59,20 +52,32 @@ mod tests {
     use super::*;
 
     #[test]
-    fn closure_cacher_i32() {
-        let mut cacher = ClosureCacher::new(|x| x);
+    fn fn_cacher_i32() {
+        let mut cacher = FnCacher::new(|&x| x);
+        let cases = vec![(1, 1), (2, 2), (3, 3)];
+        cases.iter().for_each(|case| assert_eq!(&case.1, cacher.call(&case.0)));
 
-        assert_eq!(1, *cacher.result(&1));
-        assert_eq!(2, *cacher.result(&2));
+        let mut cacher = FnCacher::new(|x| x * x);
+        let cases = vec![(1, 1), (2, 4), (3, 9)];
+        cases.iter().for_each(|case| assert_eq!(&case.1, cacher.call(&case.0)));
     }
 
     #[test]
-    fn closure_cacher_string() {
-        let mut cacher = ClosureCacher::new(|x| x);
-        let foo = String::from("foo");
-        let bar = String::from("bar");
+    fn fn_cacher_string() {
+        let mut cacher = FnCacher::new(|x: &String| x.clone());
+        let cases = vec![
+            ("a".to_string(), "a".to_string()),
+            ("b".to_string(), "b".to_string()),
+            ("c".to_string(), "c".to_string()),
+        ];
+        cases.iter().for_each(|case| assert_eq!(&case.1, cacher.call(&case.0)));
 
-        assert_eq!(String::from("foo"), *cacher.result(&foo));
-        assert_eq!(String::from("bar"), *cacher.result(&bar));
+        let mut cacher = FnCacher::new(|x: &String| x.len());
+        let cases = vec![
+            ("a".to_string(), 1),
+            ("bb".to_string(), 2),
+            ("ccc".to_string(), 3),
+        ];
+        cases.iter().for_each(|case| assert_eq!(&case.1, cacher.call(&case.0)));
     }
 }

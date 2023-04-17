@@ -1,15 +1,11 @@
 [package]
 name = "hutils"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["hansung <hansung080@hanmail.net>"]
 description = "various utilities"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/hansung080/hutils"
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
+edition = "2021"
 
 [profile.dev]
 opt-level = 0
